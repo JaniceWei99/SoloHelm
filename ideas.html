@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>OPC 灵感池</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter', sans-serif; background:#0f172a; color:#e2e8f0; }
+        .shell { background: radial-gradient(circle at 20% 20%, rgba(34,211,238,0.08), transparent 25%),
+                          radial-gradient(circle at 80% 0%, rgba(168,85,247,0.1), transparent 35%),
+                          radial-gradient(circle at 60% 70%, rgba(244,114,182,0.08), transparent 30%),
+                          #0f172a; min-height:100vh; }
+        .glass { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); box-shadow:0 20px 60px rgba(0,0,0,0.35); backdrop-filter: blur(12px); }
+        .pill { border-radius:9999px; padding:4px 10px; font-size:12px; font-weight:600; letter-spacing:0.01em; }
+        .status-todo { background: rgba(244,114,182,0.14); color:#f472b6; }
+        .status-dev { background: rgba(34,211,238,0.14); color:#22d3ee; }
+        .status-done { background: rgba(52,211,153,0.14); color:#34d399; }
+        .status-publish { background: rgba(251,191,36,0.14); color:#fbbf24; }
+        .card-hover { transition: all 0.25s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow:0 18px 40px rgba(0,0,0,0.25); }
+    </style>
+</head>
+<body class="shell" data-page="ideas">
+    <div class="min-h-screen">
+        <header class="sticky top-0 z-30 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/10">
+            <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-400 via-violet-500 to-pink-400 flex items-center justify-center text-white font-extrabold">OPC</div>
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.3em] text-white/60">One-Person Company</p>
+                        <h1 class="text-xl font-bold text-white">Idea Backlog</h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-3">
+                    <span class="pill status-publish">Idea Pool</span>
+                    <a href="index.html" class="pill bg-white/5 text-white/80 border border-white/15">任务看板</a>
+                    <button type="button" id="add-idea-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-400 to-violet-500 text-sm font-semibold text-slate-900 shadow-lg">+ 新建想法</button>
+                </div>
+                <button type="button" id="mobile-add" class="md:hidden text-white/70 text-xl"><i class="fa fa-plus"></i></button>
+            </div>
+        </header>
+
+        <main class="max-w-6xl mx-auto px-6 pb-16 pt-8 space-y-10">
+            <section class="glass rounded-3xl p-6 md:p-8 border border-white/10">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div class="space-y-3 max-w-2xl">
+                        <p class="text-xs uppercase tracking-[0.35em] text-white/60">灵感池</p>
+                        <h2 class="text-3xl md:text-4xl font-extrabold leading-tight">收集想法 → 甄别 → 推进开发</h2>
+                        <p class="text-white/70 leading-relaxed">本页专注灵感管理：收集、搜索、编辑、删除，并查看哪些想法已进入开发。</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="pill status-dev">可编辑/删除</span>
+                            <span class="pill status-done">本地存储</span>
+                            <span class="pill status-publish">支持筛选</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 w-full md:w-auto">
+                        <div class="glass rounded-2xl p-4 border border-pink-400/20">
+                            <p class="text-xs text-white/60">灵感总数</p>
+                            <p id="idea-metric-total" class="text-3xl font-bold text-pink-300">0</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 border border-cyan-400/20">
+                            <p class="text-xs text-white/60">进入开发</p>
+                            <p id="idea-metric-dev" class="text-3xl font-bold text-cyan-300">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="glass rounded-3xl p-6 border border-white/10">
+                <div class="flex items-center justify-between mb-4 gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.35em] text-white/60">Backlog</p>
+                        <h3 class="text-2xl font-bold text-white">灵感列表</h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input id="search" type="text" placeholder="搜索想法/标签" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+                        <button type="button" id="add-idea-btn-2" class="px-3 py-2 rounded-xl bg-gradient-to-r from-pink-400 to-violet-500 text-sm font-semibold text-slate-900">+ 添加</button>
+                    </div>
+                </div>
+                <div id="backlog" class="grid md:grid-cols-3 gap-3"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal (shared with tasks) -->
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-40">
+        <div class="glass rounded-3xl p-6 w-full max-w-lg border border-white/10">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-xl font-semibold">新建 / 编辑 想法</h4>
+                <button id="modal-close" class="text-white/60 hover:text-white"><i class="fa fa-times"></i></button>
+            </div>
+            <form id="idea-form" class="space-y-4">
+                <div>
+                    <label class="text-sm text-white/70">标题</label>
+                    <input name="title" required class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60">
+                </div>
+                <div>
+                    <label class="text-sm text-white/70">描述</label>
+                    <textarea name="desc" rows="3" class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-sm text-white/70">标签 (逗号分隔)</label>
+                        <input name="tags" class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60" placeholder="growth, idea">
+                    </div>
+                    <div>
+                        <label class="text-sm text-white/70">优先级</label>
+                        <select name="priority" class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60">
+                            <option value="P1">P1</option>
+                            <option value="P2" selected>P2</option>
+                            <option value="P3">P3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-sm text-white/70">类型</label>
+                        <select name="type" class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60">
+                            <option value="idea" selected>灵感</option>
+                            <option value="feature">功能</option>
+                            <option value="bug">问题</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-white/70">状态</label>
+                        <select name="status" class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60">
+                            <option value="backlog" selected>Backlog</option>
+                            <option value="todo">Todo</option>
+                            <option value="dev">Dev</option>
+                            <option value="done">Done</option>
+                            <option value="publish">Publish</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm text-white/70">依赖（可选，引用任务/链接）</label>
+                    <input name="dependency" class="mt-1 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60" placeholder="例如：发布脚本">
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl border border-white/20 text-white/80">取消</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-violet-500 text-slate-900 font-semibold">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
