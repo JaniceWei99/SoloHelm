@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>竞品分析 - SoloHelm</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    .ca-container{max-width:1100px;margin:0 auto;padding:1.5rem}
+    .ca-section{margin-bottom:2rem}
+    .ca-section h2{font-size:1.15rem;font-weight:800;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+    .ca-section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .5rem;color:var(--text-muted)}
+    .ca-section p,.ca-section li{font-size:.88rem;line-height:1.7;color:var(--text-muted)}
+    .ca-section ul{padding-left:1.2rem;margin-bottom:.6rem}
+    .ca-section li{margin-bottom:.25rem}
+
+    .ca-hero{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+    .ca-hero-card{flex:1;min-width:140px;max-width:220px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.2rem;text-align:center}
+    .ca-hero-card .val{font-size:1.8rem;font-weight:800;letter-spacing:-.03em}
+    .ca-hero-card .lbl{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem}
+
+    .ca-table{width:100%;border-collapse:collapse;margin-bottom:1rem;font-size:.82rem}
+    .ca-table th{text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;padding:.55rem .7rem;border-bottom:2px solid var(--border);white-space:nowrap}
+    .ca-table td{padding:.5rem .7rem;border-bottom:1px solid var(--glass-border);vertical-align:top}
+    .ca-table tr:hover td{background:var(--glass)}
+    .ca-table .done-badge{display:inline-flex;align-items:center;gap:.25rem;background:rgba(74,222,128,.15);color:var(--done);padding:.1rem .45rem;border-radius:6px;font-size:.72rem;font-weight:600}
+    .ca-table .has-badge{color:var(--done);font-weight:600}
+    .ca-table .no-badge{color:var(--text-muted)}
+    .ca-table .strong-badge{color:var(--dev);font-weight:600}
+    .ca-table .plugin-badge{color:var(--publish);font-weight:500}
+    .ca-table .native-badge{color:var(--todo);font-weight:500}
+
+    .advantage-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:.75rem}
+    .advantage-card h4{font-size:.88rem;font-weight:700;margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem}
+    .advantage-card h4 .num{background:var(--accent);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+    .advantage-card p,.advantage-card li{font-size:.82rem}
+
+    .weakness-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:.75rem;border-left:3px solid var(--danger)}
+    .weakness-card h4{font-size:.88rem;font-weight:700;margin-bottom:.5rem}
+
+    .proposal-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:.75rem;position:relative;overflow:hidden}
+    .proposal-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
+    .proposal-card.p0::before{background:var(--danger)}
+    .proposal-card.p1::before{background:var(--publish)}
+    .proposal-card.p2::before{background:var(--accent)}
+    .proposal-card h4{font-size:.88rem;font-weight:700;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem}
+    .proposal-card .tag{font-size:.65rem;padding:.12rem .45rem;border-radius:6px;font-weight:700;text-transform:uppercase}
+    .proposal-card .tag-p0{background:rgba(239,68,68,.2);color:var(--danger)}
+    .proposal-card .tag-p1{background:rgba(250,204,21,.2);color:var(--publish)}
+    .proposal-card .tag-p2{background:rgba(99,102,241,.2);color:var(--accent)}
+    .proposal-card .desc{font-size:.78rem;color:var(--text-muted);font-style:italic;margin-bottom:.5rem}
+
+    .ca-divider{border:none;border-top:1px solid var(--border);margin:2rem 0}
+    .ca-timestamp{font-size:.72rem;color:var(--text-muted);text-align:right;margin-top:.5rem}
+
+    .ca-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .ca-tab{padding:.4rem .9rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s}
+    .ca-tab:hover{border-color:var(--accent);color:var(--accent)}
+    .ca-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    .ca-panel{display:none}
+    .ca-panel.active{display:block}
+
+    .roadmap-track{display:flex;gap:1rem;margin:1rem 0;flex-wrap:wrap}
+    .roadmap-step{flex:1;min-width:200px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem;text-align:center;position:relative}
+    .roadmap-step .step-label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+    .roadmap-step .step-name{font-size:.92rem;font-weight:700;margin:.3rem 0}
+    .roadmap-step .step-time{font-size:.75rem;color:var(--text-muted)}
+    .roadmap-step .step-icon{font-size:1.5rem;margin-bottom:.4rem}
+    .roadmap-step.completed{border-color:var(--done)}
+    .roadmap-step.completed .step-icon{color:var(--done)}
+    .roadmap-arrow{display:flex;align-items:center;color:var(--text-muted);font-size:1.2rem}
+
+    .future-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem}
+    .future-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:.8rem 1rem;display:flex;align-items:flex-start;gap:.6rem}
+    .future-card .future-icon{font-size:1.1rem;color:var(--accent);flex-shrink:0;margin-top:.1rem}
+    .future-card .future-title{font-size:.85rem;font-weight:600}
+    .future-card .future-desc{font-size:.75rem;color:var(--text-muted)}
+    .future-card .future-pri{font-size:.65rem;padding:.1rem .35rem;border-radius:4px;font-weight:600;margin-top:.3rem;display:inline-block}
+    .future-card .pri-mid{background:rgba(250,204,21,.2);color:var(--publish)}
+    .future-card .pri-low{background:rgba(148,163,184,.2);color:var(--text-muted)}
+    .future-card .pri-later{background:rgba(99,102,241,.15);color:var(--accent)}
+
+    @media(max-width:700px){
+      .ca-hero{flex-direction:column;align-items:stretch}
+      .ca-hero-card{max-width:none}
+      .ca-table{font-size:.75rem}
+      .ca-table th,.ca-table td{padding:.4rem .5rem}
+      .roadmap-track{flex-direction:column}
+      .roadmap-arrow{transform:rotate(90deg);justify-content:center}
+    }
+  </style>
+</head>
+<body data-page="competitive-analysis">
+
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar">
+    <h1><i class="fa-solid fa-magnifying-glass-chart" style="margin-right:.4rem"></i> 竞品分析</h1>
+    <div class="navbar-links">
+      <a href="index.html"><i class="fa-solid fa-table-columns"></i> Board</a>
+      <a href="ideas.html"><i class="fa-solid fa-lightbulb"></i> Ideas</a>
+      <a href="analytics.html"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+      <button type="button" class="theme-toggle" id="theme-toggle" title="Toggle theme"><i class="fa-solid fa-sun"></i></button>
+    </div>
+  </nav>
+
+  <div class="ca-container">
+
+    <!-- ===== Tabs ===== -->
+    <div class="ca-tabs">
+      <button class="ca-tab active" data-tab="v2">V2 升级报告</button>
+      <button class="ca-tab" data-tab="v1">V1 竞品分析</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- V2 Panel -->
+    <!-- ========================================== -->
+    <div class="ca-panel active" id="panel-v2">
+
+      <!-- Hero metrics -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-rocket"></i> V2 全量升级完成</h2>
+        <div class="ca-hero">
+          <div class="ca-hero-card">
+            <div class="val" style="color:var(--done)">3/3</div>
+            <div class="lbl">改进轮次</div>
+          </div>
+          <div class="ca-hero-card">
+            <div class="val" style="color:var(--accent)">~2200</div>
+            <div class="lbl">代码总行数</div>
+          </div>
+          <div class="ca-hero-card">
+            <div class="val" style="color:var(--dev)">11</div>
+            <div class="lbl">API 端点</div>
+          </div>
+          <div class="ca-hero-card">
+            <div class="val" style="color:var(--publish)">3</div>
+            <div class="lbl">页面数</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Roadmap -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-timeline"></i> 升级路线</h2>
+        <div class="roadmap-track">
+          <div class="roadmap-step completed">
+            <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="step-label">Phase 1</div>
+            <div class="step-name">P0 修复关键缺陷</div>
+            <div class="step-time">立即修复</div>
+          </div>
+          <div class="roadmap-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="roadmap-step completed">
+            <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="step-label">Phase 2</div>
+            <div class="step-name">P1 体验增强</div>
+            <div class="step-time">逐步迭代</div>
+          </div>
+          <div class="roadmap-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="roadmap-step completed">
+            <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="step-label">Phase 3</div>
+            <div class="step-name">P2 分析与移动端</div>
+            <div class="step-time">中期规划</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- P0 -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-bug-slash"></i> P0 修复关键缺陷</h2>
+        <table class="ca-table">
+          <thead><tr><th>修复项</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>Marker 持久化 (SQLite)</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td></tr>
+            <tr><td>API 错误反馈 (Toast)</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td></tr>
+            <tr><td>搜索 debounce (300ms)</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td></tr>
+            <tr><td>前后端数据校验</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td></tr>
+            <tr><td>删除乐观更新+回滚</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- P1 -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-wand-magic-sparkles"></i> P1 体验增强</h2>
+        <table class="ca-table">
+          <thead><tr><th>新功能</th><th>状态</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>子任务/Checklist</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>Modal 内增删改，卡片显示进度条</td></tr>
+            <tr><td>键盘快捷键</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>N / Esc / ? / 斜杠 / Ctrl+Z</td></tr>
+            <tr><td>数据导出/导入</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>JSON + CSV 导出，JSON 导入</td></tr>
+            <tr><td>暗/亮主题切换</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>系统偏好检测 + localStorage</td></tr>
+            <tr><td>Undo 撤销</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>5秒 toast + Undo 按钮 + Ctrl+Z</td></tr>
+            <tr><td>空状态引导</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>空列/空搜索显示图标+文字引导</td></tr>
+            <tr><td>卡片展开详情</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>点击标题打开右侧详情面板</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- P2 -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-chart-pie"></i> P2 分析与移动端</h2>
+        <table class="ca-table">
+          <thead><tr><th>新功能</th><th>状态</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>数据分析面板</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>独立 analytics.html，4张 Chart.js 图表</td></tr>
+            <tr><td>时间线视图</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>按 releaseTime 排列的甘特图式视图</td></tr>
+            <tr><td>PWA 支持</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>Service Worker + Manifest，可离线+安装</td></tr>
+            <tr><td>周期性任务</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>daily/weekly/monthly，完成时自动克隆</td></tr>
+            <tr><td>活动日志</td><td><span class="done-badge"><i class="fa-solid fa-check"></i> Done</span></td><td>task_history 全量记录，UI 面板查看</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Competitive comparison -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-scale-balanced"></i> 与竞品差距对比</h2>
+        <div style="overflow-x:auto">
+        <table class="ca-table">
+          <thead>
+            <tr><th>功能</th><th>V1</th><th>V2</th><th>Trello</th><th>Linear</th><th>Todoist</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>子任务/Checklist</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td></tr>
+            <tr><td>键盘快捷键</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="strong-badge">强</td><td class="has-badge">有</td></tr>
+            <tr><td>数据导出</td><td class="no-badge">无</td><td class="has-badge">有 (JSON+CSV)</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td></tr>
+            <tr><td>主题切换</td><td class="no-badge">仅暗色</td><td class="has-badge">暗/亮</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td></tr>
+            <tr><td>Undo</td><td class="no-badge">无</td><td class="has-badge">有 (5s toast)</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="no-badge">无</td></tr>
+            <tr><td>时间线视图</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="plugin-badge">插件</td><td class="has-badge">有</td><td class="no-badge">无</td></tr>
+            <tr><td>数据可视化</td><td class="no-badge">无</td><td class="has-badge">有 (4图表)</td><td class="plugin-badge">插件</td><td class="has-badge">有</td><td class="no-badge">无</td></tr>
+            <tr><td>移动端/PWA</td><td class="no-badge">无</td><td class="has-badge">有 (PWA)</td><td class="native-badge">原生</td><td class="native-badge">原生</td><td class="native-badge">原生</td></tr>
+            <tr><td>周期性任务</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="plugin-badge">插件</td><td class="no-badge">无</td><td class="has-badge">有</td></tr>
+            <tr><td>活动日志</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="no-badge">无</td></tr>
+            <tr><td>数据校验</td><td class="no-badge">无</td><td class="has-badge">有 (前后端)</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td></tr>
+            <tr><td>错误反馈</td><td class="no-badge">无</td><td class="has-badge">有 (Toast)</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td></tr>
+            <tr><td>离线支持</td><td class="no-badge">LS回退</td><td class="has-badge">PWA+LS</td><td class="no-badge">部分</td><td class="has-badge">完整</td><td class="no-badge">部分</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <!-- Tech metrics -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-microchip"></i> 技术指标</h2>
+        <table class="ca-table">
+          <thead><tr><th>指标</th><th>V1</th><th>V2</th></tr></thead>
+          <tbody>
+            <tr><td>代码总行数</td><td>~982</td><td style="color:var(--done);font-weight:600">~2200</td></tr>
+            <tr><td>页面数</td><td>2</td><td style="color:var(--done);font-weight:600">3</td></tr>
+            <tr><td>API 端点</td><td>5</td><td style="color:var(--done);font-weight:600">11</td></tr>
+            <tr><td>数据库</td><td>JSON 文件</td><td style="color:var(--done);font-weight:600">SQLite</td></tr>
+            <tr><td>外部依赖</td><td>0 CDN</td><td style="color:var(--done);font-weight:600">2 CDN (FA + Chart.js)</td></tr>
+            <tr><td>PWA</td><td>否</td><td style="color:var(--done);font-weight:600">是</td></tr>
+            <tr><td>主题</td><td>仅暗色</td><td style="color:var(--done);font-weight:600">暗+亮</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Future improvements -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-compass"></i> 剩余可改进方向</h2>
+        <div class="future-grid">
+          <div class="future-card">
+            <div class="future-icon"><i class="fa-solid fa-arrows-up-down"></i></div>
+            <div>
+              <div class="future-title">拖拽排序</div>
+              <div class="future-desc">同列内卡片拖拽排序</div>
+              <span class="future-pri pri-low">低</span>
+            </div>
+          </div>
+          <div class="future-card">
+            <div class="future-icon"><i class="fa-solid fa-bell"></i></div>
+            <div>
+              <div class="future-title">到期日提醒</div>
+              <div class="future-desc">浏览器通知/邮件提醒</div>
+              <span class="future-pri pri-mid">中</span>
+            </div>
+          </div>
+          <div class="future-card">
+            <div class="future-icon"><i class="fa-solid fa-sliders"></i></div>
+            <div>
+              <div class="future-title">多视图自定义</div>
+              <div class="future-desc">用户自定义看板列</div>
+              <span class="future-pri pri-low">低</span>
+            </div>
+          </div>
+          <div class="future-card">
+            <div class="future-icon"><i class="fa-solid fa-universal-access"></i></div>
+            <div>
+              <div class="future-title">ARIA 可访问性</div>
+              <div class="future-desc">屏幕阅读器、focus trap</div>
+              <span class="future-pri pri-mid">中</span>
+            </div>
+          </div>
+          <div class="future-card">
+            <div class="future-icon"><i class="fa-solid fa-language"></i></div>
+            <div>
+              <div class="future-title">多语言 i18n</div>
+              <div class="future-desc">国际化支持</div>
+              <span class="future-pri pri-low">低</span>
+            </div>
+          </div>
+          <div class="future-card">
+            <div class="future-icon"><i class="fa-solid fa-users"></i></div>
+            <div>
+              <div class="future-title">协作功能</div>
+              <div class="future-desc">多用户/WebSocket</div>
+              <span class="future-pri pri-later">后期</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="ca-timestamp">分析人：Devin AI &middot; 更新时间：2026-03-24 CST</p>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- V1 Panel -->
+    <!-- ========================================== -->
+    <div class="ca-panel" id="panel-v1">
+
+      <!-- Project overview -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-circle-info"></i> 项目当前整体情况</h2>
+        <table class="ca-table">
+          <thead><tr><th>项目</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>项目名称</td><td>SoloHelm（一人公司个人项目管理工具）</td></tr>
+            <tr><td>版本</td><td>v1.0 — 功能初版已实现</td></tr>
+            <tr><td>技术栈</td><td>Node.js / Express + 纯 HTML/CSS/JS（无框架、无构建）</td></tr>
+            <tr><td>代码规模</td><td>~982 行</td></tr>
+            <tr><td>数据存储</td><td>服务端 JSON 文件 + 浏览器 localStorage 回退</td></tr>
+            <tr><td>页面</td><td>2 个：任务看板 + 灵感池</td></tr>
+          </tbody>
+        </table>
+        <h3>已实现的核心功能</h3>
+        <ul>
+          <li>5 阶段任务生命周期：backlog &rarr; todo &rarr; dev &rarr; done &rarr; publish</li>
+          <li>拖拽 Kanban 看板（4 列）+ 列表视图切换</li>
+          <li>灵感池独立页面，实时搜索，语音输入（Web Speech API）</li>
+          <li>双向转换：灵感 &harr; 任务（"To Todo" / "To Idea"）</li>
+          <li>共享 Modal 弹窗 CRUD，状态标记循环（空&rarr;进行中&rarr;阻塞）</li>
+          <li>Hero 指标面板 + Dashboard Summary</li>
+          <li>深色玻璃拟态主题，响应式布局</li>
+          <li>API 优先 + localStorage 离线回退</li>
+          <li>首次加载自动 seed 演示数据</li>
+        </ul>
+      </section>
+
+      <hr class="ca-divider">
+
+      <!-- Competitors table -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-scale-balanced"></i> 对标产品</h2>
+        <div style="overflow-x:auto">
+        <table class="ca-table">
+          <thead><tr><th>维度</th><th>本项目</th><th>Trello</th><th>Linear</th><th>Notion</th><th>Todoist</th></tr></thead>
+          <tbody>
+            <tr><td>定位</td><td>一人公司/独立开发者</td><td>团队看板</td><td>开发团队</td><td>全能工作台</td><td>个人任务</td></tr>
+            <tr><td>部署</td><td>自托管</td><td>SaaS</td><td>SaaS</td><td>SaaS</td><td>SaaS</td></tr>
+            <tr><td>价格</td><td style="color:var(--done);font-weight:600">免费</td><td>免费/付费</td><td>$8/月起</td><td>免费/付费</td><td>免费/付费</td></tr>
+            <tr><td>数据所有权</td><td style="color:var(--done);font-weight:600">完全自有</td><td>厂商托管</td><td>厂商托管</td><td>厂商托管</td><td>厂商托管</td></tr>
+            <tr><td>离线支持</td><td>localStorage回退</td><td>部分</td><td>完整</td><td>部分</td><td>部分</td></tr>
+            <tr><td>上手成本</td><td style="color:var(--done);font-weight:600">零配置</td><td>需注册</td><td>需注册</td><td>需注册+学习</td><td>需注册</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <hr class="ca-divider">
+
+      <!-- Advantages -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-trophy"></i> 优势分析</h2>
+        <div class="advantage-card">
+          <h4><span class="num">1</span> 灵感到发布的完整管道（独创）</h4>
+          <ul>
+            <li>5 阶段生命周期比 Trello/Todoist 的简单状态更贴合独立开发者的实际工作流</li>
+            <li>"Ideas Pool + Task Board" 双页面分离了发散思维和执行跟踪</li>
+            <li>"publish" 状态超越了普通的 "done"，对需要发布/上线的一人公司来说很实用</li>
+          </ul>
+        </div>
+        <div class="advantage-card">
+          <h4><span class="num">2</span> 零成本自托管，完整数据所有权</h4>
+          <ul>
+            <li>JSON 文件存储，git-friendly，可以直接版本控制</li>
+            <li>不依赖任何第三方 SaaS，没有订阅费用和数据锁定</li>
+            <li>对比 Linear ($8/月)、Notion (团队付费)，长期成本为零</li>
+          </ul>
+        </div>
+        <div class="advantage-card">
+          <h4><span class="num">3</span> 极简架构，极低运维负担</h4>
+          <ul>
+            <li>全栈 ~1000 行代码，没有数据库、没有构建工具、没有 Docker</li>
+            <li><code>npm start</code> 一键启动，对比 Jira 的部署复杂度几乎可忽略</li>
+            <li>不需要学习框架，任何会 HTML/JS 的人都能改</li>
+          </ul>
+        </div>
+        <div class="advantage-card">
+          <h4><span class="num">4</span> 离线韧性</h4>
+          <ul>
+            <li>API 不通时自动回退 localStorage，不会中断工作</li>
+            <li>对比 Trello 离线时基本不可用，这是实际的生产力保障</li>
+          </ul>
+        </div>
+        <div class="advantage-card">
+          <h4><span class="num">5</span> 语音速记灵感</h4>
+          <ul>
+            <li>Web Speech API 直接录入，不需要切换 app</li>
+            <li>对比 Todoist/Things 需要手动输入，语音捕捉灵感的摩擦力更低</li>
+          </ul>
+        </div>
+        <div class="advantage-card">
+          <h4><span class="num">6</span> 拖拽 + 标记的轻量交互</h4>
+          <ul>
+            <li>Kanban 拖拽跨列 + 标记循环交互密度适中</li>
+            <li>对比 Linear 的复杂工作流、Jira 的配置地狱，更适合一个人决策</li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="ca-divider">
+
+      <!-- Weaknesses -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> 不足分析</h2>
+        <h3>代码层面的技术债</h3>
+        <div class="weakness-card">
+          <h4>技术问题</h4>
+          <table class="ca-table">
+            <thead><tr><th>问题</th><th>影响</th><th>严重度</th></tr></thead>
+            <tbody>
+              <tr><td>_marker 状态仅在运行时，刷新丢失</td><td>标记"进行中/阻塞"后刷新全部消失</td><td style="color:var(--danger);font-weight:600">高</td></tr>
+              <tr><td>API 调用 fire-and-forget，无错误反馈</td><td>用户不知道保存是否成功</td><td style="color:var(--danger);font-weight:600">高</td></tr>
+              <tr><td>搜索无 debounce，每次按键全量重渲染</td><td>数据多时卡顿</td><td style="color:var(--publish);font-weight:600">中</td></tr>
+              <tr><td>无数据校验 (前后端都没有)</td><td>脏数据可写入</td><td style="color:var(--publish);font-weight:600">中</td></tr>
+              <tr><td>删除操作无回滚</td><td>API 失败时前后端数据不一致</td><td style="color:var(--publish);font-weight:600">中</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>功能缺失对比</h3>
+        <div class="weakness-card">
+          <h4>缺失功能 vs 竞品</h4>
+          <table class="ca-table">
+            <thead><tr><th>缺失功能</th><th>Trello</th><th>Linear</th><th>Todoist</th><th>对一人公司的影响</th></tr></thead>
+            <tbody>
+              <tr><td>子任务/Checklist</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td><td>无法拆解大任务</td></tr>
+              <tr><td>提醒/到期日通知</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td><td>容易遗忘 deadline</td></tr>
+              <tr><td>数据导出 (CSV/JSON)</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td><td>数据迁移困难</td></tr>
+              <tr><td>键盘快捷键</td><td class="has-badge">有</td><td class="strong-badge">强</td><td class="has-badge">有</td><td>效率受限</td></tr>
+              <tr><td>时间线/甘特视图</td><td class="plugin-badge">插件</td><td class="has-badge">有</td><td class="no-badge">无</td><td>无法做排期规划</td></tr>
+              <tr><td>周期性任务</td><td class="plugin-badge">插件</td><td class="no-badge">无</td><td class="has-badge">有</td><td>重复工作需手动建</td></tr>
+              <tr><td>数据可视化</td><td class="plugin-badge">插件</td><td class="has-badge">有</td><td class="no-badge">无</td><td>无法看趋势和效率</td></tr>
+              <tr><td>移动端/PWA</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td><td>手机上体验差</td></tr>
+              <tr><td>暗/亮主题切换</td><td class="has-badge">有</td><td class="has-badge">有</td><td class="has-badge">有</td><td>只有暗色，白天不友好</td></tr>
+              <tr><td>Undo/Redo</td><td class="no-badge">无</td><td class="has-badge">有</td><td class="no-badge">无</td><td>误操作无法恢复</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>用户体验短板</h3>
+        <ul>
+          <li>无可访问性 (ARIA, 键盘导航, focus trap)</li>
+          <li>列表视图标题/描述截断无 tooltip，信息损失</li>
+          <li>无空状态引导（列为空时没有提示）</li>
+          <li>删除无 undo，只有 confirm 弹窗</li>
+        </ul>
+      </section>
+
+      <hr class="ca-divider">
+
+      <!-- Proposals -->
+      <section class="ca-section">
+        <h2><i class="fa-solid fa-clipboard-list"></i> 改进提案</h2>
+
+        <div class="proposal-card p0">
+          <h4><span class="tag tag-p0">P0</span> fix-critical-bugs &mdash; 修复可靠性问题</h4>
+          <p class="desc">不修这些，工具不可信赖</p>
+          <table class="ca-table">
+            <thead><tr><th>修复项</th><th>问题</th><th>效果</th></tr></thead>
+            <tbody>
+              <tr><td>Marker 持久化</td><td>刷新页面标记丢失</td><td>进行中/阻塞状态正确保存</td></tr>
+              <tr><td>API 错误反馈</td><td>保存失败用户不知道</td><td>Toast 提示 + 离线模式指示</td></tr>
+              <tr><td>搜索 debounce</td><td>每按键全量重渲染</td><td>300ms 防抖，流畅搜索</td></tr>
+              <tr><td>数据校验</td><td>可写入脏数据</td><td>前后端枚举/长度校验</td></tr>
+              <tr><td>删除回滚</td><td>删除 API 失败数据不一致</td><td>乐观更新 + 失败恢复</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="proposal-card p1">
+          <h4><span class="tag tag-p1">P1</span> ux-enhancements &mdash; 补齐日用功能</h4>
+          <p class="desc">从"能用"到"好用"</p>
+          <table class="ca-table">
+            <thead><tr><th>新功能</th><th>对标竞品</th><th>价值</th></tr></thead>
+            <tbody>
+              <tr><td>子任务/Checklist</td><td>Trello, Linear</td><td>拆解大任务，跟踪完成度</td></tr>
+              <tr><td>键盘快捷键</td><td>Linear</td><td>双手不离键盘的效率</td></tr>
+              <tr><td>数据导出/导入</td><td>Notion, Trello</td><td>数据可迁移，不被锁定</td></tr>
+              <tr><td>暗/亮主题切换</td><td>全部竞品</td><td>白天/夜间都能用</td></tr>
+              <tr><td>Undo 撤销</td><td>Linear, Gmail</td><td>5 秒 toast + Undo 按钮</td></tr>
+              <tr><td>空状态引导</td><td>基本 UX</td><td>新用户不会对着空白发愣</td></tr>
+              <tr><td>卡片展开详情</td><td>Trello, Linear</td><td>不进编辑模式看全文</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="proposal-card p2">
+          <h4><span class="tag tag-p2">P2</span> analytics-and-mobile &mdash; 差异化竞争力</h4>
+          <p class="desc">从"好用"到"依赖"</p>
+          <table class="ca-table">
+            <thead><tr><th>新功能</th><th>对标竞品</th><th>价值</th></tr></thead>
+            <tbody>
+              <tr><td>数据分析面板</td><td>Linear</td><td>燃尽图/周速率/周期时间，看见效率趋势</td></tr>
+              <tr><td>时间线视图</td><td>Linear, Notion</td><td>按 Release 排期的甘特图</td></tr>
+              <tr><td>PWA 移动端</td><td>全部竞品</td><td>通勤/走路时随手记灵感</td></tr>
+              <tr><td>周期性任务</td><td>Todoist</td><td>周报/月度发票等自动复现</td></tr>
+              <tr><td>活动日志</td><td>Linear</td><td>所有变更时间线，供个人复盘</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="ca-timestamp">分析人：Devin AI &middot; 分析时间：2026-03-24 19:19 CST</p>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // Theme
+    const saved = localStorage.getItem('solohelm-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+
+    function updateThemeIcon() {
+      const btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      btn.innerHTML = isLight ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+    }
+    updateThemeIcon();
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('solohelm-theme', next);
+      updateThemeIcon();
+    });
+
+    // Tabs
+    document.querySelectorAll('.ca-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.ca-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.ca-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

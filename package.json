@@ -1,0 +1,14 @@
+{
+  "name": "solohelm",
+  "version": "1.0.0",
+  "description": "Personal project management tool for solo creators",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.14.1",
+    "uuid": "^9.0.0"
+  }
+}

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoloHelm</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f5f7fb">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><i class="fa-solid fa-cube"></i> SoloHelm</div>
+    <div class="main-tabs" id="main-tabs">
+      <button class="main-tab active" data-tab="ideas"><i class="fa-solid fa-lightbulb"></i> <span data-i18n="nav.ideas">灵感</span></button>
+      <button class="main-tab" data-tab="board"><i class="fa-solid fa-table-columns"></i> <span data-i18n="nav.board">看板</span></button>
+      <button class="main-tab" data-tab="analytics"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav.analytics">分析</span></button>
+    </div>
+  </aside>
+
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar">
+    <div class="navbar-actions">
+      <button type="button" class="theme-toggle" id="theme-toggle" data-i18n-title="nav.toggle_theme" title="切换主题"><i class="fa-solid fa-sun"></i></button>
+      <button type="button" class="theme-toggle" id="lang-toggle" title="中/EN"><i class="fa-solid fa-globe"></i> 中</button>
+      <button type="button" class="btn btn-outline" id="btn-global-history"><i class="fa-solid fa-clock-rotate-left"></i></button>
+      <div class="settings-dropdown">
+        <button type="button" class="btn btn-outline" id="btn-settings"><i class="fa-solid fa-gear"></i></button>
+        <div class="settings-menu" id="settings-menu">
+          <button type="button" data-action="export-json"><i class="fa-solid fa-download"></i> <span data-i18n="settings.export_json">导出 JSON</span></button>
+          <button type="button" data-action="export-csv"><i class="fa-solid fa-file-csv"></i> <span data-i18n="settings.export_csv">导出 CSV</span></button>
+          <button type="button" data-action="import-json"><i class="fa-solid fa-upload"></i> <span data-i18n="settings.import_json">导入 JSON</span></button>
+          <hr>
+          <button type="button" data-action="show-shortcuts"><i class="fa-solid fa-keyboard"></i> <span data-i18n="settings.shortcuts">快捷键 (?)</span></button>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-new"><i class="fa-solid fa-plus"></i> <span id="btn-new-label" data-i18n="nav.new_task">新建任务</span></button>
+    </div>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- TAB: Board                                   -->
+  <!-- ============================================ -->
+  <div class="tab-content active" id="tab-board" data-page="tasks">
+
+    <!-- Hero Metrics -->
+    <section class="hero">
+      <div class="metric-card todo">
+        <div class="value" id="metric-inprogress">0</div>
+        <div class="label" data-i18n="metric.in_progress">进行中</div>
+      </div>
+      <div class="metric-card done">
+        <div class="value" id="metric-done">0</div>
+        <div class="label" data-i18n="metric.done">已完成</div>
+      </div>
+      <div class="metric-card backlog">
+        <div class="value" id="metric-backlog">0</div>
+        <div class="label" data-i18n="metric.ideas_pool">灵感池</div>
+      </div>
+      <div class="metric-card publish">
+        <div class="value" id="metric-publish">0</div>
+        <div class="label" data-i18n="metric.published">已发布</div>
+      </div>
+    </section>
+
+    <!-- Dashboard Summary -->
+    <section class="dashboard-summary">
+      <div class="summary-chip"><span class="dot green"></span> <span data-i18n="summary.today">今日:</span> <strong id="summary-today">0</strong></div>
+      <div class="summary-chip"><span class="dot red"></span> <span data-i18n="summary.risk">风险/阻塞:</span> <strong id="summary-risk">0</strong></div>
+      <div class="summary-chip"><span class="dot blue"></span> <span data-i18n="summary.active">活跃:</span> <strong id="summary-active">0</strong></div>
+    </section>
+
+    <!-- View Toggle -->
+    <section class="view-toggle">
+      <button type="button" class="btn btn-outline active" data-view="kanban"><i class="fa-solid fa-grip"></i> <span data-i18n="view.kanban">看板</span></button>
+      <button type="button" class="btn btn-outline" data-view="list"><i class="fa-solid fa-list"></i> <span data-i18n="view.list">列表</span></button>
+      <button type="button" class="btn btn-outline" data-view="timeline"><i class="fa-solid fa-timeline"></i> <span data-i18n="view.timeline">时间线</span></button>
+    </section>
+
+    <!-- Kanban View -->
+    <section class="kanban" id="kanban-view">
+      <div class="kanban-col" data-status="todo">
+        <div class="col-header todo">
+          <span class="col-title"><i class="fa-solid fa-circle-dot"></i> <span data-i18n="col.todo">待办</span></span>
+          <span class="col-count" id="count-todo">0</span>
+        </div>
+        <div class="col-cards" id="col-todo"></div>
+      </div>
+      <div class="kanban-col" data-status="dev">
+        <div class="col-header dev">
+          <span class="col-title"><i class="fa-solid fa-code"></i> <span data-i18n="col.dev">进行中</span></span>
+          <span class="col-count" id="count-dev">0</span>
+        </div>
+        <div class="col-cards" id="col-dev"></div>
+      </div>
+      <div class="kanban-col" data-status="done">
+        <div class="col-header done">
+          <span class="col-title"><i class="fa-solid fa-circle-check"></i> <span data-i18n="col.done">开发完成</span></span>
+          <span class="col-count" id="count-done">0</span>
+        </div>
+        <div class="col-cards" id="col-done"></div>
+      </div>
+      <div class="kanban-col" data-status="publish">
+        <div class="col-header publish">
+          <span class="col-title"><i class="fa-solid fa-rocket"></i> <span data-i18n="col.publish">已发布</span></span>
+          <span class="col-count" id="count-publish">0</span>
+        </div>
+        <div class="col-cards" id="col-publish"></div>
+      </div>
+    </section>
+
+    <!-- List View -->
+    <section class="list-view hidden" id="list-view">
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="list.type">类型</th>
+            <th data-i18n="list.title">标题</th>
+            <th data-i18n="list.desc">描述</th>
+            <th data-i18n="list.tags">标签</th>
+            <th data-i18n="list.priority">优先级</th>
+            <th data-i18n="list.release">发布时间</th>
+            <th data-i18n="list.status">状态</th>
+            <th data-i18n="list.actions">操作</th>
+          </tr>
+        </thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- Timeline View -->
+    <section class="timeline-section hidden" id="timeline-view">
+      <div class="timeline-container" id="timeline-content"></div>
+    </section>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- TAB: Ideas                                   -->
+  <!-- ============================================ -->
+  <div class="tab-content" id="tab-ideas" data-page="ideas">
+
+    <!-- Hero Metrics -->
+    <section class="hero">
+      <div class="metric-card backlog">
+        <div class="value" id="metric-idea-total">0</div>
+        <div class="label" data-i18n="metric.ideas_total">灵感总数</div>
+      </div>
+      <div class="metric-card dev">
+        <div class="value" id="metric-idea-dev">0</div>
+        <div class="label" data-i18n="metric.in_dev">开发中</div>
+      </div>
+    </section>
+
+    <!-- Backlog Section -->
+    <section class="backlog-section">
+      <div class="search-bar">
+        <input type="text" id="search-input" data-i18n-placeholder="ideas.search_placeholder" placeholder="按标题或标签搜索灵感… (按 / 聚焦)">
+      </div>
+      <div class="backlog-grid" id="backlog-grid"></div>
+    </section>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- TAB: Analytics                               -->
+  <!-- ============================================ -->
+  <div class="tab-content" id="tab-analytics" data-page="analytics">
+
+    <!-- Metrics Row -->
+    <section class="hero" id="analytics-hero">
+      <div class="metric-card accent">
+        <div class="value" id="an-total">-</div>
+        <div class="label" data-i18n="metric.total_tasks">总任务数</div>
+      </div>
+      <div class="metric-card done">
+        <div class="value" id="an-cycle">-</div>
+        <div class="label" data-i18n="metric.avg_cycle">平均周期 (天)</div>
+      </div>
+      <div class="metric-card dev">
+        <div class="value" id="an-velocity">-</div>
+        <div class="label" data-i18n="metric.this_week">本周</div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="analytics-grid">
+      <div class="analytics-card">
+        <h3><i class="fa-solid fa-chart-pie"></i> <span data-i18n="chart.status_dist">状态分布</span></h3>
+        <canvas id="chart-status"></canvas>
+      </div>
+      <div class="analytics-card">
+        <h3><i class="fa-solid fa-chart-bar"></i> <span data-i18n="chart.priority_breakdown">优先级分布</span></h3>
+        <canvas id="chart-priority"></canvas>
+      </div>
+      <div class="analytics-card">
+        <h3><i class="fa-solid fa-chart-area"></i> <span data-i18n="chart.weekly_velocity">每周速率</span></h3>
+        <canvas id="chart-velocity"></canvas>
+      </div>
+      <div class="analytics-card">
+        <h3><i class="fa-solid fa-chart-line"></i> <span data-i18n="chart.burndown">燃尽图</span></h3>
+        <canvas id="chart-burndown"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Shared: Modal                                -->
+  <!-- ============================================ -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <h2 id="modal-heading" data-i18n="modal.new_task">新建任务</h2>
+      <form id="task-form" class="modal-form">
+        <div class="field">
+          <label for="f-title" data-i18n="modal.title">标题 *</label>
+          <input id="f-title" name="title" required data-i18n-placeholder="modal.title_placeholder" placeholder="任务标题" maxlength="200">
+        </div>
+        <div class="field">
+          <label for="f-desc"><span data-i18n="modal.desc">描述</span> <button type="button" class="voice-btn" id="voice-btn" data-i18n-title="modal.voice" title="语音输入"><i class="fa-solid fa-microphone"></i></button></label>
+          <textarea id="f-desc" name="desc" data-i18n-placeholder="modal.desc_placeholder" placeholder="描述任务…" maxlength="2000"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-tags"><span data-i18n="modal.tags">标签</span> <small data-i18n="modal.tags_hint">(逗号分隔)</small></label>
+          <input id="f-tags" name="tags" data-i18n-placeholder="modal.tags_placeholder" placeholder="例如 ui, bug, auth">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="f-priority" data-i18n="modal.priority">优先级</label>
+            <select id="f-priority" name="priority">
+              <option value="P1" data-i18n="modal.p1">P1 - 高</option>
+              <option value="P2" data-i18n="modal.p2">P2 - 中</option>
+              <option value="P3" selected data-i18n="modal.p3">P3 - 低</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-type" data-i18n="modal.type">类型</label>
+            <select id="f-type" name="type">
+              <option value="feature" data-i18n="modal.feature">功能</option>
+              <option value="bug" data-i18n="modal.bug">缺陷</option>
+              <option value="idea" data-i18n="modal.idea">灵感</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="f-status" data-i18n="modal.status">状态</label>
+            <select id="f-status" name="status">
+              <option value="backlog" data-i18n="modal.backlog">待定</option>
+              <option value="todo" selected data-i18n="modal.todo">待办</option>
+              <option value="dev" data-i18n="modal.dev">开发</option>
+              <option value="done" data-i18n="modal.done">完成</option>
+              <option value="publish" data-i18n="modal.publish">发布</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-dep" data-i18n="modal.dependency">依赖</label>
+            <input id="f-dep" name="dependency" data-i18n-placeholder="modal.dep_placeholder" placeholder="可选" maxlength="200">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="f-release" data-i18n="modal.release_time">发布时间</label>
+            <input id="f-release" name="releaseTime" type="date">
+          </div>
+          <div class="recurrence-section">
+            <label for="f-recurrence" data-i18n="modal.recurrence">重复</label>
+            <select id="f-recurrence">
+              <option value="none" data-i18n="modal.none">无</option>
+              <option value="daily" data-i18n="modal.daily">每日</option>
+              <option value="weekly" data-i18n="modal.weekly">每周</option>
+              <option value="monthly" data-i18n="modal.monthly">每月</option>
+            </select>
+          </div>
+        </div>
+        <!-- Subtasks -->
+        <div class="subtask-section">
+          <label data-i18n="modal.subtasks">子任务 / 清单</label>
+          <div class="subtask-list" id="subtask-list"></div>
+          <div class="subtask-add">
+            <input type="text" id="subtask-input" data-i18n-placeholder="modal.subtask_placeholder" placeholder="添加子任务…">
+            <button type="button" class="btn btn-sm btn-outline" id="subtask-add-btn">+</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="modal-cancel" data-i18n="modal.cancel">取消</button>
+          <button type="button" class="btn btn-outline" id="modal-close" style="display:none" data-i18n="modal.close">关闭</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> <span data-i18n="modal.save">保存</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Detail Side Panel ===== -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <h3 id="detail-title" data-i18n="detail.title">任务详情</h3>
+      <button type="button" class="btn btn-ghost" id="detail-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+
+  <!-- ===== History Side Panel ===== -->
+  <div class="history-panel" id="history-panel">
+    <div class="history-header">
+      <h3 id="history-title" data-i18n="history.title">历史</h3>
+      <button type="button" class="btn btn-ghost" id="history-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="history-body" id="history-content"></div>
+  </div>
+
+  <!-- ===== Keyboard Shortcuts Overlay ===== -->
+  <div class="shortcuts-overlay" id="shortcuts-overlay">
+    <div class="shortcuts-panel">
+      <h2><i class="fa-solid fa-keyboard"></i> <span data-i18n="shortcut.title">键盘快捷键</span></h2>
+      <div class="shortcuts-grid">
+        <kbd>N</kbd><span class="shortcut-desc" data-i18n="shortcut.new">新建任务 / 灵感</span>
+        <kbd>/</kbd><span class="shortcut-desc" data-i18n="shortcut.search">聚焦搜索</span>
+        <kbd>Esc</kbd><span class="shortcut-desc" data-i18n="shortcut.close">关闭弹窗 / 面板</span>
+        <kbd>?</kbd><span class="shortcut-desc" data-i18n="shortcut.help">显示帮助</span>
+        <kbd>Ctrl+Z</kbd><span class="shortcut-desc" data-i18n="shortcut.undo">撤销操作</span>
+        <kbd>1</kbd><span class="shortcut-desc" data-i18n="shortcut.board">切换到看板</span>
+        <kbd>2</kbd><span class="shortcut-desc" data-i18n="shortcut.ideas">切换到灵感</span>
+        <kbd>3</kbd><span class="shortcut-desc" data-i18n="shortcut.analytics">切换到分析</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast Container ===== -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
