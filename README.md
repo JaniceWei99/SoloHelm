@@ -139,6 +139,7 @@ PORT=8080 npm start
 ├── data/
 │   └── board.db             # SQLite 数据库 (自动创建)
 ├── doc/
+│   ├── deploy.md                # 部署指南 (Docker / Helm / 裸机)
 │   └── competitive-analysis.md  # 竞品分析 + 版本变更记录
 └── openspec/                # OpenSpec 变更归档 (proposals, designs, specs, tasks)
 ```
@@ -213,282 +214,28 @@ curl http://localhost:3000/api/export -o backup.json
 
 ## 数据备份与迁移
 
-```bash
-# 备份数据库
-cp data/board.db data/board-backup-$(date +%Y%m%d).db
-
-# 导出为 JSON
-curl http://localhost:3000/api/export > tasks-backup.json
-
-# 导入 JSON
-curl -X POST http://localhost:3000/api/import \
-  -H 'Content-Type: application/json' \
-  -d @tasks-backup.json
-```
+详见 [doc/deploy.md — 数据备份与恢复](doc/deploy.md#数据备份与恢复)。
 
 ---
 
-## Docker 部署
+## 部署
+
+支持 Docker、Kubernetes (Helm)、裸机 (PM2/systemd + Nginx) 三种部署方式。
+
+详见 **[doc/deploy.md](doc/deploy.md)**。
+
+快速参考：
 
 ```bash
-# 构建镜像
+# Docker
 docker build -t solohelm:latest .
-
-# 运行（数据持久化到本地 data 目录）
-docker run -d \
-  --name solohelm \
-  -p 3000:3000 \
-  -v solohelm-data:/app/data \
-  solohelm:latest
-```
-
-打开 http://localhost:3000 即可使用。
-
-### 自定义端口
-
-```bash
-docker run -d \
-  --name solohelm \
-  -p 8080:8080 \
-  -e PORT=8080 \
-  -v solohelm-data:/app/data \
-  solohelm:latest
-```
-
-### 推送到镜像仓库
-
-```bash
-# Docker Hub
-docker tag solohelm:latest <your-dockerhub-user>/solohelm:latest
-docker push <your-dockerhub-user>/solohelm:latest
-
-# GitHub Container Registry (GHCR)
-docker tag solohelm:latest ghcr.io/<your-github-user>/solohelm:latest
-docker push ghcr.io/<your-github-user>/solohelm:latest
-```
-
-> Helm / Kubernetes 部署前需要先将镜像推到集群可访问的 registry，然后在 `values.yaml` 中配置 `image.repository`。
-
-### Docker Compose（可选）
-
-```yaml
-# docker-compose.yml
-version: "3.8"
-services:
-  solohelm:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - solohelm-data:/app/data
-    restart: unless-stopped
-
-volumes:
-  solohelm-data:
-```
-
-```bash
-docker compose up -d
-```
-
-### 常用 Docker 运维命令
-
-```bash
-# 查看日志
-docker logs -f solohelm
-
-# 停止 / 启动 / 重启
-docker stop solohelm
-docker start solohelm
-docker restart solohelm
-
-# 删除容器（数据在 volume 中不会丢失）
-docker rm -f solohelm
-
-# 更新镜像
-docker build -t solohelm:latest . && docker rm -f solohelm
 docker run -d --name solohelm -p 3000:3000 -v solohelm-data:/app/data solohelm:latest
-```
 
----
-
-## Kubernetes 部署 (Helm)
-
-项目自带 Helm Chart，可一键部署到任意 Kubernetes 集群。
-
-### 快速部署
-
-```bash
-# 安装
+# Kubernetes (Helm)
 helm install solohelm ./helm/solohelm
 
-# 查看状态
-kubectl get pods -l app.kubernetes.io/name=solohelm
-
-# 端口转发访问
-kubectl port-forward svc/solohelm 3000:80
-```
-
-### 自定义配置
-
-```bash
-# 使用 Ingress 暴露服务
-helm install solohelm ./helm/solohelm \
-  --set ingress.enabled=true \
-  --set ingress.hosts[0].host=solohelm.example.com \
-  --set ingress.hosts[0].paths[0].path=/ \
-  --set ingress.hosts[0].paths[0].pathType=Prefix
-
-# 自定义存储大小
-helm install solohelm ./helm/solohelm \
-  --set persistence.size=5Gi
-
-# 禁用持久化（用于测试）
-helm install solohelm ./helm/solohelm \
-  --set persistence.enabled=false
-```
-
-### 升级 / 回滚 / 卸载
-
-```bash
-# 升级（修改代码或配置后重新部署）
-helm upgrade solohelm ./helm/solohelm
-
-# 升级并同时修改配置
-helm upgrade solohelm ./helm/solohelm --set image.tag=v1.1.0
-
-# 查看历史版本
-helm history solohelm
-
-# 回滚到上一个版本
-helm rollback solohelm
-
-# 回滚到指定版本（如第 2 次部署）
-helm rollback solohelm 2
-
-# 卸载（PVC 默认保留数据）
-helm uninstall solohelm
-```
-
-### 通过 env 注入自定义环境变量
-
-`values.yaml` 中的 `env` 字段会注入到容器中，可在安装/升级时传入：
-
-```bash
-helm install solohelm ./helm/solohelm \
-  --set env.PORT=8080 \
-  --set env.NODE_ENV=production
-```
-
-或在 `values.yaml` 中直接配置：
-
-```yaml
-env:
-  NODE_ENV: production
-```
-
-### Helm Chart 特性
-
-| 特性 | 说明 |
-|------|------|
-| PersistentVolumeClaim | 默认 1Gi，SQLite 数据持久化 |
-| Health Check | liveness + readiness 探针 |
-| SecurityContext | 非 root 用户运行，drop ALL capabilities |
-| Ingress | 可选，支持 TLS |
-| HPA | 可选，CPU 自动扩缩 |
-| ServiceAccount | 自动创建 |
-
-> **注意**：由于 SQLite 不支持并发写入，HPA 扩缩仅适用于只读场景。生产环境建议保持 `replicaCount: 1`。
-
----
-
-## 生产部署
-
-对于裸机 / 云主机的直接部署，建议使用进程管理器 + 反向代理来保证服务稳定和 HTTPS 支持。
-
-### 使用 PM2 进程管理
-
-```bash
-# 全局安装 pm2
-npm install -g pm2
-
-# 启动应用（自动重启 + 日志管理）
+# 裸机 (PM2)
 pm2 start server.js --name solohelm
-
-# 设置开机自启
-pm2 startup
-pm2 save
-
-# 常用命令
-pm2 status          # 查看状态
-pm2 logs solohelm   # 查看日志
-pm2 restart solohelm
-pm2 stop solohelm
-```
-
-### 使用 systemd（Linux 服务器）
-
-创建 `/etc/systemd/system/solohelm.service`：
-
-```ini
-[Unit]
-Description=SoloHelm Task Board
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/opt/solohelm
-ExecStart=/usr/bin/node server.js
-Restart=on-failure
-RestartSec=5
-Environment=NODE_ENV=production
-Environment=PORT=3000
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable solohelm
-sudo systemctl start solohelm
-sudo systemctl status solohelm
-```
-
-### Nginx 反向代理 + HTTPS
-
-```nginx
-server {
-    listen 80;
-    server_name solohelm.example.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name solohelm.example.com;
-
-    ssl_certificate     /etc/letsencrypt/live/solohelm.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/solohelm.example.com/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-使用 [Certbot](https://certbot.eff.org/) 自动获取 Let's Encrypt 免费证书：
-
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d solohelm.example.com
 ```
 
 ---
@@ -514,75 +261,7 @@ sudo certbot --nginx -d solohelm.example.com
 
 ## 常见问题排查
 
-### 端口被占用
-
-```
-Error: listen EADDRINUSE: address already in use :::3000
-```
-
-```bash
-# 查找占用端口的进程
-lsof -i :3000
-# 或使用其他端口启动
-PORT=3001 npm start
-```
-
-### 数据库锁定 / 损坏
-
-```bash
-# 备份当前数据库
-cp data/board.db data/board.db.bak
-
-# 删除后重启，会自动创建新数据库
-rm data/board.db
-npm start
-
-# 如需恢复数据，用之前导出的 JSON 导入
-curl -X POST http://localhost:3000/api/import \
-  -H 'Content-Type: application/json' \
-  -d @tasks-backup.json
-```
-
-### Docker 容器内数据丢失
-
-确保使用了 volume 挂载：
-
-```bash
-# 错误 — 容器删除后数据丢失
-docker run -d -p 3000:3000 solohelm:latest
-
-# 正确 — 数据持久化到 volume
-docker run -d -p 3000:3000 -v solohelm-data:/app/data solohelm:latest
-```
-
-### Helm 部署后无法访问
-
-```bash
-# 检查 Pod 状态
-kubectl get pods -l app.kubernetes.io/name=solohelm
-kubectl describe pod <pod-name>
-kubectl logs <pod-name>
-
-# 使用端口转发临时访问
-kubectl port-forward svc/solohelm 3000:80
-```
-
-### npm install 失败
-
-```bash
-# 清除缓存重试
-rm -rf node_modules package-lock.json
-npm install
-
-# 如果网络问题，使用镜像源
-npm install --registry=https://registry.npmmirror.com
-```
-
-### 页面白屏 / 静态资源 404
-
-- 确认 `public/` 目录下文件完整（index.html、app.js、style.css、sw.js、manifest.json）
-- 确认从项目根目录启动 `node server.js`，而非从子目录
-- 清除浏览器缓存和 Service Worker（DevTools → Application → Service Workers → Unregister）
+详见 [doc/deploy.md — 常见问题排查](doc/deploy.md#常见问题排查)。
 
 ---
 
