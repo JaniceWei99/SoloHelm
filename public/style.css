@@ -117,12 +117,17 @@ textarea{resize:vertical;min-height:70px}
 .card-title:hover{color:var(--accent)}
 .card-badge{font-size:.68rem;padding:.12rem .45rem;border-radius:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .badge-P1{background:rgba(240,104,104,.12);color:var(--danger)}
-.badge-P2{background:rgba(240,197,74,.15);color:#c59a20}
+.badge-P2{background:rgba(240,197,74,.18);color:#a67c1a}
 .badge-P3{background:rgba(137,150,171,.12);color:var(--text-muted)}
 .badge-idea{background:rgba(179,157,219,.12);color:var(--backlog)}
 .badge-feature{background:rgba(124,126,250,.1);color:var(--accent)}
 .badge-bug{background:rgba(240,104,104,.1);color:var(--danger)}
-[data-theme="dark"] .badge-P2{color:#fbbf24}
+[data-theme="dark"] .badge-P1{background:rgba(240,104,104,.18);color:#fca5a5}
+[data-theme="dark"] .badge-P2{background:rgba(240,197,74,.18);color:#fbbf24}
+[data-theme="dark"] .badge-P3{background:rgba(137,150,171,.18);color:#cbd5e1}
+[data-theme="dark"] .badge-idea{background:rgba(179,157,219,.18);color:#d8b4fe}
+[data-theme="dark"] .badge-feature{background:rgba(124,126,250,.15);color:#a5b4fc}
+[data-theme="dark"] .badge-bug{background:rgba(240,104,104,.18);color:#fca5a5}
 .card-desc{font-size:.75rem;color:var(--text-muted);margin-bottom:.35rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.35rem}
 .card-tag{font-size:.68rem;background:rgba(124,126,250,.08);color:var(--accent);padding:.1rem .4rem;border-radius:6px}
@@ -302,8 +307,17 @@ textarea{resize:vertical;min-height:70px}
 .settings-menu button:hover{background:var(--glass)}
 .settings-menu hr{border:none;border-top:1px solid var(--border);margin:0}
 
+/* ===== Loading State ===== */
+.app-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;padding:4rem 1rem;color:var(--text-muted);margin-left:200px}
+.app-loading p{font-size:.85rem;margin:0}
+.loading-spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.app-loading.hidden{display:none}
+@media(max-width:768px){.app-loading{margin-left:0}}
+
 /* ===== Panel Backdrop ===== */
 .panel-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:230;cursor:pointer}
+[data-theme="dark"] .panel-backdrop{background:rgba(0,0,0,.45)}
 
 /* ===== List View Responsive Wrapper ===== */
 .list-view{padding:0 1.5rem 2rem;overflow-x:auto;-webkit-overflow-scrolling:touch}

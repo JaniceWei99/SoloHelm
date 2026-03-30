@@ -119,6 +119,7 @@
       'toast.save_error': '保存失败: {msg}', 'toast.update_error': '更新失败: {msg}',
       'toast.delete_error': '删除失败: {msg}', 'toast.clone_error': '克隆失败: {msg}',
       'toast.offline': '离线模式 — 使用本地数据',
+      'common.loading': '加载中…',
       // Theme
       'theme.to_light': '切换到亮色模式', 'theme.to_dark': '切换到暗色模式',
       // Validation
@@ -239,6 +240,7 @@
       'toast.save_error': 'Failed to save: {msg}', 'toast.update_error': 'Failed to update: {msg}',
       'toast.delete_error': 'Failed to delete: {msg}', 'toast.clone_error': 'Failed to clone: {msg}',
       'toast.offline': 'Offline mode — using local data',
+      'common.loading': 'Loading…',
       // Theme
       'theme.to_light': 'Switch to light mode', 'theme.to_dark': 'Switch to dark mode',
       // Validation
@@ -1619,6 +1621,10 @@
       toast(t('toast.offline'), 'warn');
     }
     seedIfEmpty();
+
+    // Hide loading state
+    const loadingEl = document.getElementById('app-loading');
+    if (loadingEl) loadingEl.classList.add('hidden');
 
     // Bind tabs
     bindTabs();
