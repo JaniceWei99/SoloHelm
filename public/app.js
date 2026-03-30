@@ -336,7 +336,8 @@
     const label = type === 'delete' ? t('toast.deleted') : t('toast.status_changed');
     const el = document.createElement('div');
     el.className = 'toast toast-undo';
-    el.innerHTML = `<span class="toast-icon">\u21A9</span><span class="toast-msg">${esc(label)}</span><button class="toast-undo-btn" type="button">${t('toast.undo')}</button><button class="toast-close" type="button">&times;</button>`;
+    el.setAttribute('role', 'status');
+    el.innerHTML = `<span class="toast-icon"><i class="fa-solid fa-rotate-left"></i></span><span class="toast-msg">${esc(label)}</span><button class="toast-undo-btn" type="button">${t('toast.undo')}</button><button class="toast-close" type="button" aria-label="Dismiss">&times;</button>`;
     el.querySelector('.toast-undo-btn').onclick = () => { performUndo(); dismissToast(el); };
     el.querySelector('.toast-close').onclick = () => dismissToast(el);
     container.appendChild(el);
@@ -348,10 +349,11 @@
   function toast(msg, type = 'error', duration = 4000) {
     const container = document.getElementById('toast-container');
     if (!container) return;
-    const icons = { error: '\u26A0', warn: '\u26A0', success: '\u2713', info: '\u2139' };
+    const icons = { error: '<i class="fa-solid fa-triangle-exclamation"></i>', warn: '<i class="fa-solid fa-triangle-exclamation"></i>', success: '<i class="fa-solid fa-circle-check"></i>', info: '<i class="fa-solid fa-circle-info"></i>' };
     const el = document.createElement('div');
     el.className = `toast toast-${type}`;
-    el.innerHTML = `<span class="toast-icon">${icons[type] || ''}</span><span class="toast-msg">${esc(msg)}</span><button class="toast-close" type="button">&times;</button>`;
+    el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    el.innerHTML = `<span class="toast-icon">${icons[type] || ''}</span><span class="toast-msg">${esc(msg)}</span><button class="toast-close" type="button" aria-label="Dismiss">&times;</button>`;
     el.querySelector('.toast-close').onclick = () => dismissToast(el);
     container.appendChild(el);
     const timer = setTimeout(() => dismissToast(el), duration);
@@ -401,9 +403,14 @@
   }
 
   /* ---------- Tab Switching ---------- */
+  const validTabs = ['ideas', 'board', 'analytics'];
+
   function switchTab(tab) {
     if (activeTab === tab) return;
     activeTab = tab;
+
+    // Update URL hash
+    if (location.hash !== `#${tab}`) history.replaceState(null, '', `#${tab}`);
 
     // Update tab buttons
     document.querySelectorAll('.main-tab').forEach(tb => {
@@ -540,6 +547,21 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  /* ---------- Custom Confirm Dialog ---------- */
+  function customConfirm(message) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      overlay.innerHTML = `<div class="confirm-dialog"><p>${esc(message)}</p><div class="confirm-actions"><button type="button" class="btn btn-outline confirm-cancel">${t('modal.cancel')}</button><button type="button" class="btn btn-danger confirm-ok">${t('card.del')}</button></div></div>`;
+      const close = (result) => { overlay.remove(); resolve(result); };
+      overlay.querySelector('.confirm-cancel').onclick = () => close(false);
+      overlay.querySelector('.confirm-ok').onclick = () => close(true);
+      overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
+      document.body.appendChild(overlay);
+      overlay.querySelector('.confirm-ok').focus();
+    });
+  }
+
   /* ---------- Frontend Validation ---------- */
   function validateTaskData(data) {
     const errors = [];
@@ -557,6 +579,7 @@
   function showFieldErrors(errors) {
     clearFieldErrors();
     const fieldMap = { title: 'f-title', desc: 'f-desc', tags: 'f-tags', priority: 'f-priority', type: 'f-type', status: 'f-status', dependency: 'f-dep' };
+    let firstInput = null;
     for (const err of errors) {
       const input = document.getElementById(fieldMap[err.field]);
       if (!input) continue;
@@ -565,7 +588,9 @@
       msgEl.className = 'field-error-msg';
       msgEl.textContent = err.msg;
       input.parentElement.appendChild(msgEl);
+      if (!firstInput) firstInput = input;
     }
+    if (firstInput) firstInput.focus();
   }
 
   function clearFieldErrors() {
@@ -578,8 +603,11 @@
   const form = () => document.getElementById('task-form');
   let modalSubtasks = [];
 
+  let formDirty = false;
+
   function showModal(task) {
     editingId = task ? task.id : null;
+    formDirty = false;
     const f = form();
     const page = getActivePage();
     f.title.value = task ? task.title : '';
@@ -608,9 +636,19 @@
   }
 
   function hideModal() {
+    if (formDirty) {
+      const msg = currentLang === 'zh' ? '有未保存的更改，确定关闭？' : 'Unsaved changes. Close anyway?';
+      customConfirm(msg).then(ok => { if (ok) doHideModal(); });
+      return;
+    }
+    doHideModal();
+  }
+
+  function doHideModal() {
     overlay().classList.remove('open');
     editingId = null;
     modalSubtasks = [];
+    formDirty = false;
     clearFieldErrors();
     form().reset();
   }
@@ -674,13 +712,24 @@
     }
     clearFieldErrors();
 
-    if (editingId) {
-      await updateTask(editingId, data);
-    } else {
-      await addTask(data);
+    const saveBtn = form().querySelector('button[type="submit"]');
+    const origText = saveBtn ? saveBtn.textContent : '';
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = currentLang === 'zh' ? '保存中…' : 'Saving…'; }
+
+    try {
+      if (editingId) {
+        await updateTask(editingId, data);
+      } else {
+        await addTask(data);
+      }
+      formDirty = false;
+      doHideModal();
+      render();
+    } catch (err) {
+      toast(err.message || 'Save failed', 'error');
+    } finally {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = origText; }
     }
-    hideModal();
-    render();
   }
 
   async function addTask(data) {
@@ -1046,7 +1095,8 @@
         datasets: [{
           data: Object.values(data.statusDist),
           backgroundColor: ['#b39ddb', '#f28cb2', '#4ecdc4', '#6bcb77', '#f0c54a'],
-          borderWidth: 0,
+          borderWidth: 2,
+          borderColor: '#fff',
         }]
       },
       options: {
@@ -1091,10 +1141,11 @@
           fill: true,
           tension: .3,
           pointRadius: 4,
+          pointStyle: 'triangle',
         }]
       },
       options: {
-        plugins: { legend: { labels: { color: tc } } },
+        plugins: { legend: { labels: { color: tc, usePointStyle: true } } },
         scales: {
           y: { beginAtZero: true, ticks: { color: tc, stepSize: 1 } },
           x: { ticks: { color: tc } },
@@ -1118,12 +1169,12 @@
       data: {
         labels: burnKeys.map(k => k.slice(5)),
         datasets: [
-          { label: t('chart.created_cum'), data: createdData, borderColor: '#f28cb2', tension: .3, pointRadius: 3 },
-          { label: t('chart.completed_cum'), data: completedData, borderColor: '#6bcb77', tension: .3, pointRadius: 3 },
+          { label: t('chart.created_cum'), data: createdData, borderColor: '#f28cb2', tension: .3, pointRadius: 3, pointStyle: 'circle' },
+          { label: t('chart.completed_cum'), data: completedData, borderColor: '#6bcb77', tension: .3, pointRadius: 3, borderDash: [6, 3], pointStyle: 'rectRot' },
         ]
       },
       options: {
-        plugins: { legend: { labels: { color: tc } } },
+        plugins: { legend: { labels: { color: tc, usePointStyle: true } } },
         scales: {
           y: { beginAtZero: true, ticks: { color: tc } },
           x: { ticks: { color: tc } },
@@ -1138,6 +1189,7 @@
     const panel = document.getElementById('detail-panel');
     const body = document.getElementById('detail-body');
     const title = document.getElementById('detail-title');
+    const backdrop = document.getElementById('panel-backdrop');
     if (!panel || !body) return;
 
     const tk = tasks.find(x => x.id === taskId);
@@ -1172,6 +1224,7 @@
 
     body.innerHTML = html;
     panel.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
   }
 
   function fieldHTML(label, value) {
@@ -1182,7 +1235,9 @@
 
   function hideDetail() {
     const panel = document.getElementById('detail-panel');
+    const backdrop = document.getElementById('panel-backdrop');
     if (panel) panel.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
   }
 
   /* ---------- Search with Debounce ---------- */
@@ -1211,6 +1266,8 @@
     htitle.textContent = task ? `${t('history.title')}: ${task.title}` : t('history.title');
     content.innerHTML = `<div style="text-align:center;padding:1rem;color:var(--text-muted)">${t('history.loading')}</div>`;
     panel.classList.add('open');
+    const backdrop = document.getElementById('panel-backdrop');
+    if (backdrop) backdrop.classList.add('open');
 
     try {
       const res = await fetch(`${API}/${taskId}/history`);
@@ -1240,6 +1297,8 @@
     htitle.textContent = t('history.recent');
     content.innerHTML = `<div style="text-align:center;padding:1rem;color:var(--text-muted)">${t('history.loading')}</div>`;
     panel.classList.add('open');
+    const backdrop = document.getElementById('panel-backdrop');
+    if (backdrop) backdrop.classList.add('open');
 
     try {
       const res = await fetch('/api/history?limit=50');
@@ -1263,7 +1322,9 @@
 
   function hideHistory() {
     const panel = document.getElementById('history-panel');
+    const backdrop = document.getElementById('panel-backdrop');
     if (panel) panel.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
   }
 
   function formatAction(action) {
@@ -1376,7 +1437,7 @@
       btn.onclick = () => { const tk = tasks.find(x => x.id === btn.dataset.edit); if (tk) showModal(tk); };
     });
     document.querySelectorAll('[data-delete]').forEach(btn => {
-      btn.onclick = () => { if (confirm(t('confirm.delete'))) deleteTask(btn.dataset.delete); };
+      btn.onclick = () => { customConfirm(t('confirm.delete')).then(ok => { if (ok) deleteTask(btn.dataset.delete); }); };
     });
     document.querySelectorAll('[data-totodo]').forEach(btn => {
       btn.onclick = () => updateTaskStatus(btn.dataset.totodo, 'todo');
@@ -1562,12 +1623,26 @@
     // Bind tabs
     bindTabs();
 
+    // URL hash routing
+    const hashTab = location.hash.replace('#', '');
+    if (validTabs.includes(hashTab) && hashTab !== activeTab) {
+      activeTab = hashTab;
+      document.querySelectorAll('.main-tab').forEach(tb => tb.classList.toggle('active', tb.dataset.tab === hashTab));
+      document.querySelectorAll('.tab-content').forEach(p => p.classList.toggle('active', p.id === `tab-${hashTab}`));
+    }
+    window.addEventListener('hashchange', () => {
+      const h = location.hash.replace('#', '');
+      if (validTabs.includes(h)) switchTab(h);
+    });
+
     // Bind modal
     document.getElementById('btn-new').addEventListener('click', () => showModal(null));
     document.getElementById('modal-close').addEventListener('click', hideModal);
     document.getElementById('modal-cancel').addEventListener('click', hideModal);
     overlay().addEventListener('click', e => { if (e.target === overlay()) hideModal(); });
     form().addEventListener('submit', handleFormSubmit);
+    form().addEventListener('input', () => { formDirty = true; });
+    form().addEventListener('change', () => { formDirty = true; });
 
     // Subtask add button
     const subAddBtn = document.getElementById('subtask-add-btn');
@@ -1592,6 +1667,10 @@
     // Detail panel
     const detailClose = document.getElementById('detail-close');
     if (detailClose) detailClose.addEventListener('click', hideDetail);
+
+    // Panel backdrop click-to-close
+    const panelBackdrop = document.getElementById('panel-backdrop');
+    if (panelBackdrop) panelBackdrop.addEventListener('click', () => { hideDetail(); hideHistory(); });
 
     // Shortcuts overlay
     const shortcutsOverlay = document.getElementById('shortcuts-overlay');

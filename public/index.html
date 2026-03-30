@@ -7,16 +7,20 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#f5f7fb">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
+  <!-- Skip to main content (a11y) -->
+  <a href="#tab-ideas" class="sr-only" id="skip-link" style="position:absolute;top:-40px;left:0;background:var(--accent);color:#fff;padding:.5rem 1rem;z-index:9999;border-radius:0 0 8px 0;transition:top .15s" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Skip to main content</a>
+
   <!-- ===== Sidebar ===== -->
-  <aside class="sidebar">
-    <div class="sidebar-logo"><i class="fa-solid fa-cube"></i> SoloHelm</div>
+  <aside class="sidebar" role="navigation" aria-label="Main navigation">
+    <h1 class="sidebar-logo"><i class="fa-solid fa-cube"></i> SoloHelm</h1>
     <div class="main-tabs" id="main-tabs">
       <button class="main-tab active" data-tab="ideas"><i class="fa-solid fa-lightbulb"></i> <span data-i18n="nav.ideas">灵感</span></button>
       <button class="main-tab" data-tab="board"><i class="fa-solid fa-table-columns"></i> <span data-i18n="nav.board">看板</span></button>
@@ -29,9 +33,9 @@
     <div class="navbar-actions">
       <button type="button" class="theme-toggle" id="theme-toggle" data-i18n-title="nav.toggle_theme" title="切换主题"><i class="fa-solid fa-sun"></i></button>
       <button type="button" class="theme-toggle" id="lang-toggle" title="中/EN"><i class="fa-solid fa-globe"></i> 中</button>
-      <button type="button" class="btn btn-outline" id="btn-global-history"><i class="fa-solid fa-clock-rotate-left"></i></button>
+      <button type="button" class="btn btn-outline" id="btn-global-history" aria-label="Activity history" data-i18n-title="nav.history" title="活动历史"><i class="fa-solid fa-clock-rotate-left"></i></button>
       <div class="settings-dropdown">
-        <button type="button" class="btn btn-outline" id="btn-settings"><i class="fa-solid fa-gear"></i></button>
+        <button type="button" class="btn btn-outline" id="btn-settings" aria-label="Settings" aria-haspopup="true" data-i18n-title="nav.settings" title="设置"><i class="fa-solid fa-gear"></i></button>
         <div class="settings-menu" id="settings-menu">
           <button type="button" data-action="export-json"><i class="fa-solid fa-download"></i> <span data-i18n="settings.export_json">导出 JSON</span></button>
           <button type="button" data-action="export-csv"><i class="fa-solid fa-file-csv"></i> <span data-i18n="settings.export_csv">导出 CSV</span></button>
@@ -160,7 +164,7 @@
     <!-- Backlog Section -->
     <section class="backlog-section">
       <div class="search-bar">
-        <input type="text" id="search-input" data-i18n-placeholder="ideas.search_placeholder" placeholder="按标题或标签搜索灵感… (按 / 聚焦)">
+        <input type="search" id="search-input" data-i18n-placeholder="ideas.search_placeholder" placeholder="按标题或标签搜索灵感… (按 / 聚焦)">
       </div>
       <div class="backlog-grid" id="backlog-grid"></div>
     </section>
@@ -191,19 +195,19 @@
     <section class="analytics-grid">
       <div class="analytics-card">
         <h3><i class="fa-solid fa-chart-pie"></i> <span data-i18n="chart.status_dist">状态分布</span></h3>
-        <canvas id="chart-status"></canvas>
+        <canvas id="chart-status" role="img" aria-label="Status distribution chart"></canvas>
       </div>
       <div class="analytics-card">
         <h3><i class="fa-solid fa-chart-bar"></i> <span data-i18n="chart.priority_breakdown">优先级分布</span></h3>
-        <canvas id="chart-priority"></canvas>
+        <canvas id="chart-priority" role="img" aria-label="Priority distribution chart"></canvas>
       </div>
       <div class="analytics-card">
         <h3><i class="fa-solid fa-chart-area"></i> <span data-i18n="chart.weekly_velocity">每周速率</span></h3>
-        <canvas id="chart-velocity"></canvas>
+        <canvas id="chart-velocity" role="img" aria-label="Weekly velocity chart"></canvas>
       </div>
       <div class="analytics-card">
         <h3><i class="fa-solid fa-chart-line"></i> <span data-i18n="chart.burndown">燃尽图</span></h3>
-        <canvas id="chart-burndown"></canvas>
+        <canvas id="chart-burndown" role="img" aria-label="Burndown chart"></canvas>
       </div>
     </section>
   </div>
@@ -329,8 +333,11 @@
     </div>
   </div>
 
+  <!-- ===== Panel Backdrop (for detail/history panels) ===== -->
+  <div class="panel-backdrop" id="panel-backdrop"></div>
+
   <!-- ===== Toast Container ===== -->
-  <div class="toast-container" id="toast-container"></div>
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
   <script src="app.js"></script>
 </body>
