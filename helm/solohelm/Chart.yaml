@@ -1,0 +1,16 @@
+apiVersion: v2
+name: solohelm
+description: A Helm chart for SoloHelm — personal project management for solo creators
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - project-management
+  - kanban
+  - solo-creator
+  - opc
+home: https://github.com/JaniceWei99/OPC-ProjectManagement
+sources:
+  - https://github.com/JaniceWei99/OPC-ProjectManagement
+maintainers:
+  - name: JaniceWei99
