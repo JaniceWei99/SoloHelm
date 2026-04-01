@@ -64,7 +64,13 @@
 
 > **Windows 注意**：首次安装 Node.js 后需要**关闭窗口再双击一次** `install-windows.bat`（让系统 PATH 生效）。
 >
-> **macOS 首次双击提示"无法验证开发者"**：右键点击 `install-macos.command` → 选择"打开" → 点击"打开"即可。
+> **macOS 首次双击提示"无法打开"或"无法验证开发者"**：
+>
+> 方法一（推荐）：**右键点击** `install-macos.command` → 选择"打开" → 点击"打开"
+>
+> 方法二：打开 **系统设置 → 隐私与安全性** → 底部找到被阻止的文件 → 点击"仍要打开"
+>
+> 方法三：打开终端执行 `xattr -d com.apple.quarantine install-macos.command`，然后双击即可
 
 Linux 下还支持更多选项：
 
