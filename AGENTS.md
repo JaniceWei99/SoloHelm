@@ -1,8 +1,10 @@
 # SoloHelm — Project Guide
 
 ## Quick Start
-```bash
-npm start          # Start server at http://localhost:3000
+```
+Windows:  double-click install-windows.bat
+macOS:    double-click install-macos.command
+Linux:    bash install-linux.sh
 ```
 
 ## Tech Stack
@@ -29,6 +31,9 @@ doc/
   competitive-analysis.md — Competitive analysis + changelog
 openspec/changes/        — OpenSpec change archive (proposals, designs, specs, tasks)
 helm/solohelm/           — Helm Chart for Kubernetes deployment
+install-linux.sh         — One-click install & deploy script (Linux)
+install-macos.command    — macOS double-click installer
+install-windows.bat      — Windows double-click installer
 Dockerfile               — Multi-stage Docker build
 .dockerignore            — Docker build exclusions
 ```
